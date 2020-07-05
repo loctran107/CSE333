@@ -1,0 +1,86 @@
+1) what does POSIX stand for?
+
+Portatble Operating System Interface. An API that supports system calls for 
+the application user. System calls is invoked by calling this API to work on
+behalf of the standard C library that connects to the operating system
+
+2) Benefits? 
+
++ not buffered, so user has option to customzie their implementation on top of 
+  read()/write()
+
++ has explicit control of the system resources since POSIX interacts 
+  with the OS kernel
+
++ There is no other standard API for network and I/O devices except POSIX 
+
++ Note: Most UNIX-like operating system would likely have POSIX since it 
+  is cross-platform, and maintain compatability as UNIX-like OS.
+
+3) 
+
+int fd = open("333.txt", O_WRONLY); //open 333.txt
+int n = ...; //buffer size
+char* buf = ....
+int result;
+
+char* ptr = buf; //initialize variable for loop
+... //code that populates buf happens here
+
+while (ptr < buf + n) {
+
+	result = write(fd, ptr, buf + n - ptr);
+	if (result == -1) {
+		if (errno != EINTR) {
+			// a real error happened, return an error result
+			close(fd); //clean up
+			perror("Write failed");
+			return -1;
+			
+		}
+		continue; //EINTR happened, so loop around and try again
+	}
+	ptr += result; //update loop variable 
+}
+
+close(fd); //cleanup
+
+4) Why is it important to store the return value from the write() function? Why 
+do we not check for a return value of 0 like we do for read()?
+
+Write may not write all bytes as specified in count. Also, writing automatically
+add lengths to the file, so we don't need to check EOF.
+
+5) Why is it important to remember to call the close() function once you have finished
+working on a file?
+
+Answer: probably to prevent memory leak. Or it's just a good practive. Save resoures and
+prevent other user tamper with our read/write file
+
+Solution: In order to FREE resources, otherwise, other processes can acquire access 
+on these files
+
+**ERROR**
+
+POSIX system calls do not handle errors as in C standard library.
+User need to gracefully handle the error themselves
+
++ #include <errno.h> that includes error number errno (use this to check the error type)
++ use perror to print out message error based on errno
++ errno is a shared library functions and overwrites frequently => read it right after the error
+
+Common error conditions:
+
++ EBADF: unvalid fd or is not open for reading
++ EFAULT: buf is outside accessible address space
++ EINTR: Call was interrupted by a signal before any data was read
+	 This error is likely to be recoverable
++ EISDIR: fd refers to a directory
+
+
+
+
+*************************DIR* in POSIX*******************
+
+
+
